@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RATASTATS🐭💰</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --clay:    #b85a25; --clay-bg: #f5e4d6;
+    --hard:    #1557a0; --hard-bg: #d6e8f7;
+    --grass:   #276b34; --grass-bg:#d3edd7;
+    --bg:      #0e0e0e; --bg2: #181818; --bg3: #222;
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --text:    #efefef; --muted: #777;
+    --accent:  #e05a28;
+    --atp:     #1557a0; --atp-bg: #d6e8f7;
+    --wta:     #9b2c6e; --wta-bg: #f5d6ea;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-weight: 300;
+    min-height: 100vh; padding: 2.5rem 1rem 5rem;
+  }
+
+  header { text-align: center; margin-bottom: 2rem; }
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 9vw, 6.5rem);
+    letter-spacing: 0.06em; line-height: 0.95; color: #fff;
+  }
+  header h1 em { color: var(--accent); font-style: normal; }
+  header p { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem; letter-spacing: 0.06em; }
+  header a { color: var(--hard); text-decoration: underline; text-underline-offset: 3px; font-size: 0.78rem; }
+
+  .wrap { max-width: 1050px; margin: 0 auto; }
+
+  /* ── TOUR TOGGLE ── */
+  .tour-toggle {
+    display: flex; justify-content: center; gap: 8px;
+    margin-bottom: 2rem;
+  }
+  .tour-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem; letter-spacing: 0.1em;
+    padding: 0.4rem 2rem; border-radius: 99px;
+    border: 1.5px solid var(--border2);
+    background: transparent; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tour-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+  .tour-btn.active-atp { background: var(--atp-bg); color: var(--atp); border-color: var(--atp); }
+  .tour-btn.active-wta { background: var(--wta-bg); color: var(--wta); border-color: var(--wta); }
+
+  /* ── STATUS ── */
+  .status {
+    font-family: 'DM Mono', monospace; font-size: 0.78rem;
+    color: var(--muted); text-align: center; margin-bottom: 1rem; min-height: 1.2em;
+  }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border2); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SELECTOR ── */
+  .selector-grid {
+    display: grid; grid-template-columns: 1fr 48px 1fr;
+    gap: 0.75rem; align-items: start; margin-bottom: 2.5rem;
+  }
+  .vs { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--muted); text-align: center; padding-top: 2.2rem; letter-spacing: 0.12em; }
+  .player-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+  .player-card h3 { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.85rem; }
+
+  .search-wrap { position: relative; margin-bottom: 0.75rem; }
+  .search-wrap input {
+    width: 100%; background: var(--bg3); border: 0.5px solid var(--border2);
+    border-radius: 8px; padding: 0.6rem 0.9rem; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: rgba(255,255,255,0.3); }
+  .search-wrap input::placeholder { color: var(--muted); }
+
+  .dropdown {
+    position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+    background: #252525; border: 0.5px solid var(--border2);
+    border-radius: 9px; max-height: 230px; overflow-y: auto; z-index: 200; display: none;
+  }
+  .dropdown.open { display: block; }
+  .dd-item { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.9rem; font-size: 0.84rem; cursor: pointer; transition: background 0.12s; }
+  .dd-item:hover { background: rgba(255,255,255,0.06); }
+  .dd-item .rank { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+
+  .selected-info { display: none; }
+  .selected-info.visible { display: block; }
+  .sel-name { font-size: 1.05rem; font-weight: 500; margin-bottom: 0.75rem; }
+  .elo-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .chip { border-radius: 7px; padding: 0.45rem 0.4rem; text-align: center; }
+  .chip .clabel { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 2px; opacity: 0.75; }
+  .chip .cval { font-family: 'DM Mono', monospace; font-size: 0.92rem; font-weight: 500; display: block; }
+  .chip.hard  { background: var(--hard-bg);  color: var(--hard); }
+  .chip.clay  { background: var(--clay-bg);  color: var(--clay); }
+  .chip.grass { background: var(--grass-bg); color: var(--grass); }
+  .clear-btn { margin-top: 0.7rem; background: none; border: none; color: var(--muted); font-size: 0.73rem; font-family: 'DM Mono', monospace; cursor: pointer; letter-spacing: 0.05em; transition: color 0.2s; }
+  .clear-btn:hover { color: var(--text); }
+
+  /* ── RESULTS ── */
+  #results { display: none; }
+  #results.visible { display: block; }
+  .result-header { text-align: center; margin-bottom: 2rem; }
+  .matchup { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: 0.05em; color: #fff; }
+  .matchup em { color: var(--accent); font-style: normal; }
+  .tour-badge {
+    display: inline-block; margin-bottom: 0.5rem;
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 3px 10px; border-radius: 99px;
+  }
+  .tour-badge.atp { background: var(--atp-bg); color: var(--atp); }
+  .tour-badge.wta { background: var(--wta-bg); color: var(--wta); }
+
+  .surfaces-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+  .surface-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .surf-header { padding: 0.9rem 1.25rem 0.7rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 0.5px solid var(--border); }
+  .surf-icon { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .surf-icon.hard  { background: var(--hard); }
+  .surf-icon.clay  { background: var(--clay); }
+  .surf-icon.grass { background: var(--grass); }
+  .surf-label { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .surf-body { padding: 1.25rem; }
+
+  .big-probs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
+  .big-prob { background: var(--bg3); border-radius: 9px; padding: 0.85rem; text-align: center; }
+  .big-prob .pname { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .big-prob .pnum { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; line-height: 1; letter-spacing: 0.04em; }
+  .big-prob .pnum.hard  { color: var(--hard); }
+  .big-prob .pnum.clay  { color: var(--clay); }
+  .big-prob .pnum.grass { color: var(--grass); }
+  .winner-tag { display: inline-block; margin-top: 0.4rem; font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; }
+  .winner-tag.hard  { background: var(--hard-bg);  color: var(--hard); }
+  .winner-tag.clay  { background: var(--clay-bg);  color: var(--clay); }
+  .winner-tag.grass { background: var(--grass-bg); color: var(--grass); }
+  .bar-track { height: 7px; background: var(--bg3); border-radius: 99px; overflow: hidden; margin-top: 1rem; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+  .bar-fill.hard  { background: var(--hard); }
+  .bar-fill.clay  { background: var(--clay); }
+  .bar-fill.grass { background: var(--grass); }
+  .elo-info { margin-top: 1rem; padding-top: 0.75rem; border-top: 0.5px solid var(--border); display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+  .formula-note { text-align: center; margin-top: 3rem; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; }
+  .formula-note code { background: var(--bg3); border: 0.5px solid var(--border2); padding: 2px 7px; border-radius: 5px; color: #ccc; }
+
+  .dropdown::-webkit-scrollbar { width: 5px; }
+  .dropdown::-webkit-scrollbar-track { background: transparent; }
+  .dropdown::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  @media (max-width: 600px) {
+    .selector-grid { grid-template-columns: 1fr; }
+    .vs { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>RATASTATS🐭💰<em></em></h1>
+    <p>Probabilidades de victoria por superficie</p>
+    <p style="margin-top:0.3rem">Datos: <a href="https://tennisabstract.com" target="_blank">tennisabstract.com</a></p>
+  </header>
+
+  <!-- TOUR TOGGLE -->
+  <div class="tour-toggle">
+    <button class="tour-btn active-atp" id="btnATP" onclick="switchTour('atp')">ATP</button>
+    <button class="tour-btn" id="btnWTA" onclick="switchTour('wta')">WTA</button>
+  </div>
+
+  <div class="status" id="status">
+    <span class="spinner"></span> Cargando rankings ELO…
+  </div>
+
+  <div class="selector-grid">
+    <div class="player-card">
+      <h3>Jugador A</h3>
+      <div class="search-wrap">
+        <input type="text" id="searchA" placeholder="Buscar jugador…" autocomplete="off" disabled>
+        <div class="dropdown" id="dropA"></div>
+      </div>
+      <div class="selected-info" id="infoA">
+        <p class="sel-name" id="nameA"></p>
+        <div class="elo-chips">
+          <div class="chip hard"><span class="clabel">Dura</span><span class="cval" id="heloA">—</span></div>
+          <div class="chip clay"><span class="clabel">Tierra</span><span class="cval" id="celoA">—</span></div>
+          <div class="chip grass"><span class="clabel">Hierba</span><span class="cval" id="geloA">—</span></div>
+        </div>
+        <button class="clear-btn" onclick="clearPlayer('A')">✕ Cambiar jugador</button>
+      </div>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="player-card">
+      <h3>Jugador B</h3>
+      <div class="search-wrap">
+        <input type="text" id="searchB" placeholder="Buscar jugador…" autocomplete="off" disabled>
+        <div class="dropdown" id="dropB"></div>
+      </div>
+      <div class="selected-info" id="infoB">
+        <p class="sel-name" id="nameB"></p>
+        <div class="elo-chips">
+          <div class="chip hard"><span class="clabel">Dura</span><span class="cval" id="heloB">—</span></div>
+          <div class="chip clay"><span class="clabel">Tierra</span><span class="cval" id="celoB">—</span></div>
+          <div class="chip grass"><span class="clabel">Hierba</span><span class="cval" id="geloB">—</span></div>
+        </div>
+        <button class="clear-btn" onclick="clearPlayer('B')">✕ Cambiar jugador</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="result-header">
+      <div id="tourBadge" class="tour-badge atp">ATP</div>
+      <div class="matchup" id="matchupLabel"></div>
+    </div>
+    <div class="surfaces-grid" id="surfacesGrid"></div>
+  </div>
+
+
+</div>
+<script>
+let allPlayers = [];
+let selectedA = null, selectedB = null;
+let currentTour = 'atp';
+
+const SURFACES = [
+  { id: 'hard',  label: 'Pista dura',    key: 'hElo' },
+  { id: 'clay',  label: 'Tierra batida', key: 'cElo' },
+  { id: 'grass', label: 'Hierba',        key: 'gElo' },
+];
+
+function winProb(rA, rB) {
+  if (rA == null || rB == null) return null;
+  return (1 / (1 + Math.pow(10, (rB - rA) / 400)) * 100).toFixed(1);
+}
+
+async function loadPlayers(tour) {
+  document.getElementById('status').innerHTML = '<span class="spinner"></span> Cargando rankings ELO…';
+  document.getElementById('searchA').disabled = true;
+  document.getElementById('searchB').disabled = true;
+  try {
+    const res = await fetch(`/api/players/${tour}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    allPlayers = data.players;
+    const cachedOn = data.cached_on || '?';
+    document.getElementById('status').innerHTML =
+      `${allPlayers.length} jugadores cargados &nbsp;·&nbsp; <span style="color:#555;font-size:0.72rem">datos del ${cachedOn}</span> &nbsp;·&nbsp; selecciona dos para comparar`;
+    document.getElementById('searchA').disabled = false;
+    document.getElementById('searchB').disabled = false;
+  } catch(e) {
+    document.getElementById('status').textContent = '⚠ Error al cargar datos: ' + e.message;
+  }
+}
+
+function switchTour(tour) {
+  if (tour === currentTour) return;
+  currentTour = tour;
+
+  // Update buttons
+  document.getElementById('btnATP').className = 'tour-btn' + (tour === 'atp' ? ' active-atp' : '');
+  document.getElementById('btnWTA').className = 'tour-btn' + (tour === 'wta' ? ' active-wta' : '');
+
+  // Reset selections
+  clearPlayer('A');
+  clearPlayer('B');
+  document.getElementById('results').classList.remove('visible');
+
+  loadPlayers(tour);
+}
+
+function setupSearch(side) {
+  const input = document.getElementById('search' + side);
+  const drop  = document.getElementById('drop' + side);
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+    const matches = allPlayers.filter(p => p.name.toLowerCase().includes(q)).slice(0, 30);
+    if (!matches.length) { drop.classList.remove('open'); return; }
+    drop.innerHTML = matches.map(p => {
+      const idx = allPlayers.indexOf(p);
+      return `<div class="dd-item" onclick="selectPlayer('${side}', ${idx})">
+        <span>${p.name}</span><span class="rank">#${p.rank}</span>
+      </div>`;
+    }).join('');
+    drop.classList.add('open');
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !drop.contains(e.target))
+      drop.classList.remove('open');
+  });
+}
+
+function selectPlayer(side, idx) {
+  const p = allPlayers[idx];
+  if (side === 'A') selectedA = { ...p, idx }; else selectedB = { ...p, idx };
+
+  document.getElementById('search' + side).value = '';
+  document.getElementById('drop' + side).classList.remove('open');
+  document.getElementById('name' + side).textContent = p.name;
+  document.getElementById('helo' + side).textContent = p.hElo ?? '—';
+  document.getElementById('celo' + side).textContent = p.cElo ?? '—';
+  document.getElementById('gelo' + side).textContent = p.gElo ?? '—';
+  document.getElementById('info' + side).classList.add('visible');
+
+  if (selectedA && selectedB) showResults();
+}
+
+function clearPlayer(side) {
+  if (side === 'A') selectedA = null; else selectedB = null;
+  document.getElementById('info' + side).classList.remove('visible');
+  document.getElementById('search' + side).value = '';
+  document.getElementById('results').classList.remove('visible');
+}
+
+function showResults() {
+  const a = selectedA, b = selectedB;
+
+  const badge = document.getElementById('tourBadge');
+  badge.textContent = currentTour.toUpperCase();
+  badge.className = `tour-badge ${currentTour}`;
+
+  document.getElementById('matchupLabel').innerHTML =
+    `${a.name} <em>vs</em> ${b.name}`;
+
+  const grid = document.getElementById('surfacesGrid');
+  grid.innerHTML = '';
+
+  SURFACES.forEach(surf => {
+    const eA = a[surf.key], eB = b[surf.key];
+    const pA = winProb(eA, eB);
+    const pB = pA !== null ? (100 - parseFloat(pA)).toFixed(1) : null;
+    const widthA = pA !== null ? pA : 50;
+
+    const card = document.createElement('div');
+    card.className = 'surface-card';
+    card.innerHTML = `
+      <div class="surf-header">
+        <div class="surf-icon ${surf.id}"></div>
+        <span class="surf-label">${surf.label}</span>
+      </div>
+      <div class="surf-body">
+        <div class="big-probs">
+          <div class="big-prob">
+            <div class="pname">${a.name}</div>
+            <div class="pnum ${surf.id}">${pA !== null ? pA + '%' : '—'}</div>
+            ${pA !== null && parseFloat(pA) > 50 ? `<div class="winner-tag ${surf.id}">favorito</div>` : ''}
+          </div>
+          <div class="big-prob">
+            <div class="pname">${b.name}</div>
+            <div class="pnum ${surf.id}">${pB !== null ? pB + '%' : '—'}</div>
+            ${pB !== null && parseFloat(pB) > 50 ? `<div class="winner-tag ${surf.id}">favorito</div>` : ''}
+          </div>
+        </div>
+        ${pA !== null
+          ? `<div class="bar-track"><div class="bar-fill ${surf.id}" style="width:${widthA}%"></div></div>`
+          : '<p style="font-size:.78rem;color:var(--muted);margin-top:.6rem;font-family:DM Mono,monospace">Sin datos ELO para esta superficie</p>'
+        }
+        <div class="elo-info">
+          <span>${a.name.split(' ').pop()}: ${eA ?? '—'}</span>
+          <span>${b.name.split(' ').pop()}: ${eB ?? '—'}</span>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('results').classList.add('visible');
+}
+
+setupSearch('A');
+setupSearch('B');
+loadPlayers('atp');
+</script>
+</body>
+</html>
