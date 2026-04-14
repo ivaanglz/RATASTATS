@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import re
 import json
@@ -52,17 +52,9 @@ def cache_is_fresh(tour):
 
 def scrape_players(tour):
     url = TOUR_URLS[tour]
-    req_headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Referer": "https://www.google.com/",
-    }
     print(f"[{tour.upper()}] Haciendo scraping de {url}…")
-    resp = requests.get(url, headers=req_headers, timeout=15)
+    scraper = cloudscraper.create_scraper()
+    resp = scraper.get(url, timeout=15)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
