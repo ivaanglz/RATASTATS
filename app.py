@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import os
-from datetime import datetime, date
+from datetime import date
 
 app = Flask(__name__)
 
@@ -13,7 +13,6 @@ TOUR_URLS = {
     "wta": "https://tennisabstract.com/reports/wta_elo_ratings.html",
 }
 
-# Cache files stored next to app.py
 CACHE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -35,7 +34,7 @@ def load_cache(tour):
 def save_cache(tour, players):
     path = cache_path(tour)
     data = {
-        "fetched_on": date.today().isoformat(),  # e.g. "2026-04-13"
+        "fetched_on": date.today().isoformat(),
         "players": players,
     }
     with open(path, "w", encoding="utf-8") as f:
@@ -44,31 +43,11 @@ def save_cache(tour, players):
 
 
 def cache_is_fresh(tour):
-    """
-    Cache is considered fresh if:
-    - It was fetched today, OR
-    - It was fetched this week AND today is not Monday
-      (Monday = weekday 0, so we only re-fetch on Mondays or if cache > 7 days old)
-    """
+    """Cache is fresh if it was fetched today."""
     cached = load_cache(tour)
     if not cached:
         return False
-
-    fetched = date.fromisoformat(cached["fetched_on"])
-    today = date.today()
-    days_old = (today - fetched).days
-
-    # Always refresh if cache is older than 7 days
-    if days_old >= 7:
-        return False
-
-    # If today is Monday, refresh (ELO updates happen on Mondays)
-    if today.weekday() == 0:  # 0 = Monday
-        # But only re-fetch if we haven't already fetched today
-        return fetched == today
-
-    # Any other day: cache is fresh as long as it's less than 7 days old
-    return True
+    return cached["fetched_on"] == date.today().isoformat()
 
 
 def scrape_players(tour):
@@ -139,7 +118,7 @@ def scrape_players(tour):
 
 
 def get_players(tour):
-    """Return players from cache if fresh, otherwise scrape and cache."""
+    """Return players from cache if fetched today, otherwise scrape."""
     if cache_is_fresh(tour):
         cached = load_cache(tour)
         print(f"[{tour.upper()}] Usando caché del {cached['fetched_on']}")
