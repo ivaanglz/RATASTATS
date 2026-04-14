@@ -1,10 +1,16 @@
 from flask import Flask, render_template, jsonify
-import cloudscraper
 from bs4 import BeautifulSoup
 import re
 import json
 import os
 from datetime import date
+
+try:
+    import cloudscraper
+    USE_CLOUDSCRAPER = True
+except ImportError:
+    import requests
+    USE_CLOUDSCRAPER = False
 
 app = Flask(__name__)
 
@@ -43,22 +49,45 @@ def save_cache(tour, players):
 
 
 def cache_is_fresh(tour):
-    """Cache is fresh if it was fetched today."""
     cached = load_cache(tour)
     if not cached:
         return False
     return cached["fetched_on"] == date.today().isoformat()
 
 
+def fetch_html(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Referer": "https://www.google.com/",
+    }
+    if USE_CLOUDSCRAPER:
+        print("Usando cloudscraper…")
+        scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "mobile": False})
+        resp = scraper.get(url, timeout=30)
+    else:
+        print("Usando requests…")
+        import requests
+        resp = requests.get(url, headers=headers, timeout=30)
+
+    print(f"HTTP status: {resp.status_code}")
+    if resp.status_code == 403:
+        raise Exception(f"403 Forbidden — tennisabstract bloqueó la petición")
+    resp.raise_for_status()
+    return resp.text
+
+
 def scrape_players(tour):
     url = TOUR_URLS[tour]
     print(f"[{tour.upper()}] Haciendo scraping de {url}…")
-    scraper = cloudscraper.create_scraper()
-    resp = scraper.get(url, timeout=15)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+
+    html = fetch_html(url)
+    soup = BeautifulSoup(html, "html.parser")
 
     table = soup.find("table", {"id": "reportable"}) or soup.find("table")
+    if not table:
+        raise Exception("No se encontró la tabla en la página")
 
     header_row = table.find("thead")
     th_cells = header_row.find_all("th") if header_row else table.find_all("tr")[0].find_all(["th", "td"])
@@ -67,7 +96,7 @@ def scrape_players(tour):
     for i, th in enumerate(th_cells):
         col_map[th.get_text(strip=True).lower()] = i
 
-    print(f"[{tour.upper()}] Columnas detectadas: {col_map}")
+    print(f"[{tour.upper()}] Columnas: {col_map}")
 
     def find_col(candidates):
         for c in candidates:
@@ -114,16 +143,15 @@ def scrape_players(tour):
             "gElo": to_int(get(idx_gelo)),
         })
 
+    print(f"[{tour.upper()}] {len(players)} jugadores extraídos")
     return players
 
 
 def get_players(tour):
-    """Return players from cache if fetched today, otherwise scrape."""
     if cache_is_fresh(tour):
         cached = load_cache(tour)
         print(f"[{tour.upper()}] Usando caché del {cached['fetched_on']}")
         return cached["players"]
-
     players = scrape_players(tour)
     save_cache(tour, players)
     return players
@@ -154,6 +182,8 @@ def api_players(tour):
             "cached_on": cached["fetched_on"] if cached else None,
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
@@ -172,6 +202,8 @@ def api_compare(tour, idx_a, idx_b):
         ]
         return jsonify({"ok": True, "player_a": a, "player_b": b, "surfaces": surfaces})
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
