@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RATASTATS🐭💰</title>
+<title>Tennis ELO — Probabilidades por Superficie</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -102,6 +102,7 @@
   .chip { border-radius: 7px; padding: 0.45rem 0.4rem; text-align: center; }
   .chip .clabel { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 2px; opacity: 0.75; }
   .chip .cval { font-family: 'DM Mono', monospace; font-size: 0.92rem; font-weight: 500; display: block; }
+  .chip.elo   { background: #2a2a2a; color: #aaa; border: 0.5px solid var(--border2); }
   .chip.hard  { background: var(--hard-bg);  color: var(--hard); }
   .chip.clay  { background: var(--clay-bg);  color: var(--clay); }
   .chip.grass { background: var(--grass-bg); color: var(--grass); }
@@ -167,10 +168,9 @@
 <div class="wrap">
 
   <header>
-    <h1>RATASTATS🐭💰<em></em></h1>
+    <h1>TENNIS <em>ELO</em></h1>
     <p>Probabilidades de victoria por superficie</p>
-    <p style="margin-top:0.3rem">Telegram: <a href="https://t.me/ratastats1" target="_blank">t.me/ratastats1</a></p>
-  </header>
+    <p style="margin-top:0.3rem">Modelo propio basado en datos públicos de tenis.  <a 
 
   <!-- TOUR TOGGLE -->
   <div class="tour-toggle">
@@ -192,6 +192,7 @@
       <div class="selected-info" id="infoA">
         <p class="sel-name" id="nameA"></p>
         <div class="elo-chips">
+          <div class="chip elo"><span class="clabel">ELO</span><span class="cval" id="eloA">—</span></div>
           <div class="chip hard"><span class="clabel">Dura</span><span class="cval" id="heloA">—</span></div>
           <div class="chip clay"><span class="clabel">Tierra</span><span class="cval" id="celoA">—</span></div>
           <div class="chip grass"><span class="clabel">Hierba</span><span class="cval" id="geloA">—</span></div>
@@ -211,6 +212,7 @@
       <div class="selected-info" id="infoB">
         <p class="sel-name" id="nameB"></p>
         <div class="elo-chips">
+          <div class="chip elo"><span class="clabel">ELO</span><span class="cval" id="eloB">—</span></div>
           <div class="chip hard"><span class="clabel">Dura</span><span class="cval" id="heloB">—</span></div>
           <div class="chip clay"><span class="clabel">Tierra</span><span class="cval" id="celoB">—</span></div>
           <div class="chip grass"><span class="clabel">Hierba</span><span class="cval" id="geloB">—</span></div>
@@ -228,6 +230,9 @@
     <div class="surfaces-grid" id="surfacesGrid"></div>
   </div>
 
+  <div class="formula-note">
+    Fórmula ELO &nbsp;·&nbsp; <code>P(A) = 1 / (1 + 10^((ELO_B − ELO_A) / 400))</code>
+  </div>
 
 </div>
 <script>
@@ -312,6 +317,7 @@ function selectPlayer(side, idx) {
   document.getElementById('search' + side).value = '';
   document.getElementById('drop' + side).classList.remove('open');
   document.getElementById('name' + side).textContent = p.name;
+  document.getElementById('elo'  + side).textContent = p.elo  ?? '—';
   document.getElementById('helo' + side).textContent = p.hElo ?? '—';
   document.getElementById('celo' + side).textContent = p.cElo ?? '—';
   document.getElementById('gelo' + side).textContent = p.gElo ?? '—';

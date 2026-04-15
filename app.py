@@ -15,8 +15,18 @@ def load_cache(tour):
         return json.load(f)
 
 
-def win_prob(rating_a, rating_b):
-    if rating_a is None or rating_b is None:
+def win_prob(surf_a, surf_b, elo_a, elo_b):
+    """70% superficie + 30% ELO general."""
+    if surf_a is not None and surf_b is not None and elo_a is not None and elo_b is not None:
+        rating_a = 0.7 * surf_a + 0.3 * elo_a
+        rating_b = 0.7 * surf_b + 0.3 * elo_b
+    elif surf_a is not None and surf_b is not None:
+        rating_a = surf_a
+        rating_b = surf_b
+    elif elo_a is not None and elo_b is not None:
+        rating_a = elo_a
+        rating_b = elo_b
+    else:
         return None
     return round(1 / (1 + 10 ** ((rating_b - rating_a) / 400)) * 100, 1)
 
@@ -52,9 +62,9 @@ def api_compare(tour, idx_a, idx_b):
         a = players[idx_a]
         b = players[idx_b]
         surfaces = [
-            {"id": "hard",  "label": "Pista dura",    "prob_a": win_prob(a["hElo"], b["hElo"]), "prob_b": win_prob(b["hElo"], a["hElo"]), "elo_a": a["hElo"], "elo_b": b["hElo"]},
-            {"id": "clay",  "label": "Tierra batida", "prob_a": win_prob(a["cElo"], b["cElo"]), "prob_b": win_prob(b["cElo"], a["cElo"]), "elo_a": a["cElo"], "elo_b": b["cElo"]},
-            {"id": "grass", "label": "Hierba",        "prob_a": win_prob(a["gElo"], b["gElo"]), "prob_b": win_prob(b["gElo"], a["gElo"]), "elo_a": a["gElo"], "elo_b": b["gElo"]},
+            {"id": "hard",  "label": "Pista dura",    "prob_a": win_prob(a["hElo"], b["hElo"], a["elo"], b["elo"]), "prob_b": win_prob(b["hElo"], a["hElo"], b["elo"], a["elo"]), "elo_a": a["hElo"], "elo_b": b["hElo"]},
+            {"id": "clay",  "label": "Tierra batida", "prob_a": win_prob(a["cElo"], b["cElo"], a["elo"], b["elo"]), "prob_b": win_prob(b["cElo"], a["cElo"], b["elo"], a["elo"]), "elo_a": a["cElo"], "elo_b": b["cElo"]},
+            {"id": "grass", "label": "Hierba",        "prob_a": win_prob(a["gElo"], b["gElo"], a["elo"], b["elo"]), "prob_b": win_prob(b["gElo"], a["gElo"], b["elo"], a["elo"]), "elo_a": a["gElo"], "elo_b": b["gElo"]},
         ]
         return jsonify({"ok": True, "player_a": a, "player_b": b, "surfaces": surfaces})
     except Exception as e:
